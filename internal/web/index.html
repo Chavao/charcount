@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>CharCount</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <button id="theme-toggle" class="toolbar-button" type="button" aria-pressed="false">
+        Dark mode
+      </button>
+    </header>
+    <main class="charcount-app">
+      <section class="panel panel-editor">
+        <textarea id="editor" class="editor" spellcheck="false">Lorem ipsum dolor sit amet</textarea>
+      </section>
+      <section class="panel panel-stats">
+        <div class="stats-wrap">
+          <h1 class="stats-title">Text statistics</h1>
+          <ul class="metrics">
+            <li class="metric-item">
+              <span class="metric-label">Characters</span>
+              <span id="characters" class="metric-value">0</span>
+            </li>
+            <li class="metric-item">
+              <span class="metric-label">Words</span>
+              <span id="words" class="metric-value">0</span>
+            </li>
+            <li class="metric-item">
+              <span class="metric-label">Sentences</span>
+              <span id="sentences" class="metric-value">0</span>
+            </li>
+            <li class="metric-item">
+              <span class="metric-label">Paragraphs</span>
+              <span id="paragraphs" class="metric-value">0</span>
+            </li>
+            <li class="metric-item">
+              <span class="metric-label">Spaces</span>
+              <span id="spaces" class="metric-value">0</span>
+            </li>
+          </ul>
+          <section class="density" aria-live="polite">
+            <div class="density-header">
+              <h2 class="density-title">Word density</h2>
+              <span id="density-summary" class="density-summary">0 unique words</span>
+            </div>
+            <div class="density-table-wrap">
+              <table class="density-table">
+                <thead>
+                  <tr>
+                    <th>Word</th>
+                    <th>Count</th>
+                    <th>Density</th>
+                  </tr>
+                </thead>
+                <tbody id="density-body"></tbody>
+              </table>
+              <p id="density-empty" class="density-empty">Type text to view density details.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
