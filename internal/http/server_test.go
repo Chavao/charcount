@@ -86,7 +86,7 @@ func TestNewServerServesEmbeddedAssets(t *testing.T) {
 		t.Fatalf("ReadAll() error = %v", err)
 	}
 
-	if !strings.Contains(string(body), "analyzeText") {
+	if !strings.Contains(string(body), "/api/analyze") {
 		t.Fatalf("body missing script content: %q", string(body))
 	}
 }

@@ -13,56 +13,13 @@ const densityBodyEl = document.getElementById("density-body");
 const densityEmptyEl = document.getElementById("density-empty");
 const defaultText = editor.value;
 
-function extractWords(text) {
-  const words = text.toLowerCase().match(/\p{L}[\p{L}\p{N}'-]*/gu);
-  return words || [];
-}
+let analyzeRequestId = 0;
 
-function countSentences(text) {
-  const trimmed = text.trim();
-  if (!trimmed) {
-    return 0;
-  }
-
-  const matches = trimmed.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
-  if (!matches) {
-    return 0;
-  }
-
-  return matches.map((sentence) => sentence.trim()).filter(Boolean).length;
-}
-
-function countParagraphs(text) {
-  const normalized = text.replace(/\r\n?/g, "\n").trim();
-  if (!normalized) {
-    return 0;
-  }
-
-  return normalized.split(/\n\s*\n/).filter((paragraph) => paragraph.trim() !== "").length;
-}
-
-function buildDensityRows(words) {
-  const counts = new Map();
-
-  for (const word of words) {
-    counts.set(word, (counts.get(word) || 0) + 1);
-  }
-
-  return Array.from(counts.entries()).sort((a, b) => {
-    const byCount = b[1] - a[1];
-    if (byCount !== 0) {
-      return byCount;
-    }
-
-    return a[0].localeCompare(b[0]);
-  });
-}
-
-function renderDensity(rows, wordCount) {
+function renderDensity(rows) {
   densityBodyEl.replaceChildren();
   densitySummaryEl.textContent = `${rows.length} unique words`;
 
-  if (rows.length === 0 || wordCount === 0) {
+  if (rows.length === 0) {
     densityEmptyEl.hidden = false;
     return;
   }
@@ -71,18 +28,17 @@ function renderDensity(rows, wordCount) {
 
   const fragment = document.createDocumentFragment();
 
-  for (const [word, count] of rows) {
-    const density = ((count / wordCount) * 100).toFixed(2);
+  for (const rowData of rows) {
     const row = document.createElement("tr");
 
     const wordCell = document.createElement("td");
-    wordCell.textContent = word;
+    wordCell.textContent = rowData.word;
 
     const countCell = document.createElement("td");
-    countCell.textContent = String(count);
+    countCell.textContent = String(rowData.count);
 
     const densityCell = document.createElement("td");
-    densityCell.textContent = `${density}%`;
+    densityCell.textContent = rowData.density;
 
     row.append(wordCell, countCell, densityCell);
     fragment.appendChild(row);
@@ -91,29 +47,40 @@ function renderDensity(rows, wordCount) {
   densityBodyEl.appendChild(fragment);
 }
 
-function analyzeText(text) {
-  const words = extractWords(text);
-  const wordCount = words.length;
-  const result = {
-    characters: text.length,
-    words: wordCount,
-    sentences: countSentences(text),
-    paragraphs: countParagraphs(text),
-    spaces: (text.match(/ /g) || []).length,
-    densityRows: buildDensityRows(words),
-  };
+async function requestAnalysis(text) {
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
 
-  return result;
+  if (!response.ok) {
+    throw new Error(`analysis request failed with status ${response.status}`);
+  }
+
+  return response.json();
 }
 
-function updateUI() {
-  const analysis = analyzeText(editor.value);
+async function updateUI() {
+  const requestId = ++analyzeRequestId;
+  const analysis = await requestAnalysis(editor.value);
+
+  if (requestId !== analyzeRequestId) {
+    return;
+  }
+
   charactersEl.textContent = String(analysis.characters);
   wordsEl.textContent = String(analysis.words);
   sentencesEl.textContent = String(analysis.sentences);
   paragraphsEl.textContent = String(analysis.paragraphs);
   spacesEl.textContent = String(analysis.spaces);
-  renderDensity(analysis.densityRows, analysis.words);
+  renderDensity(analysis.densityRows);
+}
+
+function triggerUIUpdate() {
+  void updateUI().catch(() => {});
 }
 
 function saveTextState() {
@@ -171,7 +138,7 @@ function loadTheme() {
 
 editor.addEventListener("input", () => {
   saveTextState();
-  updateUI();
+  triggerUIUpdate();
 });
 
 themeToggle.addEventListener("click", () => {
@@ -182,4 +149,4 @@ themeToggle.addEventListener("click", () => {
 
 loadTextState();
 setTheme(loadTheme());
-updateUI();
+triggerUIUpdate();
